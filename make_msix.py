@@ -21,4 +21,4 @@ with zipfile.ZipFile("INSITEVA.msix","w",zipfile.ZIP_DEFLATED) as z:
         for file in files:
             fp=os.path.join(r,file)
             z.write(fp, os.path.relpath(fp,DIST))
-print("✅ INSITEVA.msix ban gaya!")
+print("INSITEVA.msix ban gaya!")
