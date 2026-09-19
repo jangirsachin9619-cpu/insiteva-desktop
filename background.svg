@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" viewBox="0 0 900 900">
+<rect width="900" height="900" fill="#000000"/>
+<g fill="none" stroke="#16465e" stroke-width="1.5" opacity="0.92">
+<path d="M450 20 L880 450 L450 880 L20 450 Z"/><path d="M450 100 L800 450 L450 800 L100 450 Z"/><path d="M450 180 L720 450 L450 720 L180 450 Z"/><path d="M450 260 L640 450 L450 640 L260 450 Z"/>
+<path d="M450 0 V900 M0 450 H900 M0 0 L900 900 M900 0 L0 900"/>
+</g><g fill="none" stroke="#20a8c8" stroke-width="1.2" opacity="0.42"><circle cx="450" cy="450" r="320"/><circle cx="450" cy="450" r="220"/><circle cx="450" cy="450" r="120"/></g>
+<g fill="#62efff" opacity="0.55"><circle cx="450" cy="450" r="3"/><circle cx="180" cy="180" r="2.5"/><circle cx="720" cy="230" r="2.5"/><circle cx="690" cy="700" r="2.5"/><circle cx="210" cy="680" r="2.5"/></g>
+<text x="450" y="490" text-anchor="middle" font-family="Segoe UI,Arial" font-size="96" font-weight="900" fill="#dffcff" opacity="0.035">D-AI</text>
+</svg>
