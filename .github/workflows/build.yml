@@ -13,7 +13,7 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
       - name: Build EXE
-        run: pyinstaller --noconfirm --onedir --windowed --name INSITEVA app.py
+        run: pyinstaller --noconfirm --onefile --windowed --name INSITEVA app.py
       - name: Make MSIX
         run: python make_msix.py
       - name: Upload MSIX
