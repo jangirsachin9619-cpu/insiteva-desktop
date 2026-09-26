@@ -8,9 +8,11 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -20,18 +22,21 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller pillow
 
-      - name: Fix missing icons
+      - name: Fix missing icons and files
         run: |
           mkdir assets -Force
-          python -c "from PIL import Image; Image.new('RGBA',(256,256),(0,120,255,255)).save('assets/insiteva.ico'); Image.new('RGBA',(256,256),(0,120,255,255)).save('insiteva.ico'); print('Icons fixed')"
+          python -c "from PIL import Image; Image.new('RGBA',(256,256),(0,120,255,255)).save('assets/insiteva.ico'); Image.new('RGBA',(256,256),(0,120,255,255)).save('insiteva.ico'); print('Icons OK')"
 
-      - name: Build EXE
+      - name: Build EXE with PyInstaller
         run: pyinstaller INSITEVA.spec --noconfirm --clean
 
       - name: Make MSIX
         run: python make_msix.py
 
-      - name: Upload MSIX
+      - name: List MSIX files
+        run: dir /b *.msix
+
+      - name: Upload MSIX artifact
         uses: actions/upload-artifact@v4
         with:
           name: INSITEVA-msix-1.0.12.0
