@@ -20,11 +20,14 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller pillow
 
-      - name: Fix missing assets folder
+      - name: Fix missing assets and icon
         run: |
           New-Item -ItemType Directory -Force -Path assets
           New-Item -ItemType Directory -Force -Path insiteva-desktop/assets
-          if (-not (Test-Path "assets/*")) { Set-Content -Path "assets/.keep" -Value "" }
+          # create dummy icon if missing - PyInstaller needs a valid .ico
+          python -c "from PIL import Image; import os; img=Image.new('RGBA',(256,256),(0,120,255,255)); 
+          paths=['insiteva.ico','app.ico','icon.ico','assets/icon.ico','insiteva-desktop/insiteva.ico']; 
+          [img.save(p) or print(f'Created {p}') for p in paths if not os.path.exists(p)]"
 
       - name: Build EXE
         run: pyinstaller INSITEVA.spec --noconfirm --clean
