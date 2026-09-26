@@ -20,7 +20,7 @@ Image.new('RGBA', (50,50), (0,120,212,255)).save("build_msix/Assets/StoreLogo.pn
 # 3. AppxManifest
 Path("build_msix/AppxManifest.xml").write_text('''<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
-  <Identity Name="Insiteva.INSITEVA" Publisher="CN=4D02E3C1-2496-4104-A71A-89481814EBE0" Version="1.0.11.0" ProcessorArchitecture="x64"/>
+  <Identity Name="Insiteva.INSITEVA" Publisher="CN=4D02E3C1-2496-4104-A71A-89481814EBE0" Version="1.0.12.0" ProcessorArchitecture="x64"/>
   <Properties><DisplayName>INSITEVA</DisplayName><PublisherDisplayName>Insiteva</PublisherDisplayName><Logo>Assets\\StoreLogo.png</Logo></Properties>
   <Dependencies><TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" /></Dependencies>
   <Resources><Resource Language="en-us" /></Resources>
