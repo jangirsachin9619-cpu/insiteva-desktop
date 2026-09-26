@@ -3,7 +3,6 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: windows-latest
@@ -17,16 +16,16 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller pillow
-      - name: Fix missing icons and files
+      - name: Fix missing icons
         run: |
           mkdir assets -Force
           python -c "from PIL import Image; Image.new('RGBA',(256,256),(0,120,255,255)).save('assets/insiteva.ico'); Image.new('RGBA',(256,256),(0,120,255,255)).save('insiteva.ico')"
-      - name: Build EXE with PyInstaller
+      - name: Build EXE
         run: pyinstaller INSITEVA.spec --noconfirm --clean
       - name: Make MSIX
         run: python make_msix.py
-      - name: Upload MSIX artifact
+      - name: Upload MSIX
         uses: actions/upload-artifact@v4
         with:
-          name: INSITEVA-msix-1.0.13.0
+          name: INSITEVA-msix-1.0.14.0
           path: "*.msix"
