@@ -29,11 +29,12 @@ if os.path.exists("assets"):
         if os.path.isfile(s):
             shutil.copy(s, d)
 
-# --- FINAL MANIFEST - Partner Center Valid ---
+# --- FIXED VALID MANIFEST ---
 manifest = """<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-         IgnorableNamespaces="uap">
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap rescap">
   <Identity Name="Insiteva.INSITEVA" Publisher="CN=4D02E3C1-2496-4104-A71A-89481814EBE0" Version="1.0.13.0" />
   <Properties>
     <DisplayName>INSITEVA</DisplayName>
@@ -50,14 +51,13 @@ manifest = """<?xml version="1.0" encoding="utf-8"?>
     <Application Id="App" Executable="INSITEVA.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements DisplayName="INSITEVA"
         Description="INSITEVA Desktop App"
-        BackgroundColor="transparent"
+        BackgroundColor="#2D2D30"
         Square150x150Logo="assets\\Square150x150Logo.png"
         Square44x44Logo="assets\\SmallLogo.png" />
     </Application>
   </Applications>
   <Capabilities>
-    <Capability Name="runFullTrust" />
-    <Capability Name="internetClient" />
+    <rescap:Capability Name="runFullTrust" />
   </Capabilities>
 </Package>
 """
@@ -69,9 +69,9 @@ with open("msix_build/AppxManifest.xml", "w", encoding="utf-8") as f:
 for name, size in [("StoreLogo.png",(50,50)), ("Square150x150Logo.png",(150,150)), ("SmallLogo.png",(44,44)), ("Square44x44Logo.png",(44,44))]:
     p = f"msix_build/assets/{name}"
     if not os.path.exists(p):
-        Image.new('RGBA', size, (0,120,255,255)).save(p)
+        Image.new('RGBA', size, (45,45,48,255)).save(p)
 
-# Find makeappx.exe (x64 only)
+# Find makeappx.exe
 kits = sorted(pathlib.Path(r"C:\Program Files (x86)\Windows Kits\10\bin").rglob("x64/makeappx.exe"), reverse=True)
 if not kits:
     raise Exception("makeappx.exe not found")
