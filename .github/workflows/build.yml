@@ -9,22 +9,28 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install deps
+
+      - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller pillow
-      - name: Fix missing icon
+
+      - name: Fix missing icons
         run: |
           mkdir assets -Force
-          python -c "from PIL import Image; Image.new('RGBA',(256,256),(0,120,255,255)).save('assets/insiteva.ico'); Image.new('RGBA',(256,256),(0,120,255,255)).save('insiteva.ico')"
+          python -c "from PIL import Image; Image.new('RGBA',(256,256),(0,120,255,255)).save('assets/insiteva.ico'); Image.new('RGBA',(256,256),(0,120,255,255)).save('insiteva.ico'); print('Icons fixed')"
+
       - name: Build EXE
         run: pyinstaller INSITEVA.spec --noconfirm --clean
+
       - name: Make MSIX
         run: python make_msix.py
+
       - name: Upload MSIX
         uses: actions/upload-artifact@v4
         with:
