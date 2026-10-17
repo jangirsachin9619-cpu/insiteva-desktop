@@ -32,7 +32,7 @@ exe = EXE(
     a.datas,
     [],
     name='INSITEVA',
-    icon='assets/insiteva.ico',
+    icon=None,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
