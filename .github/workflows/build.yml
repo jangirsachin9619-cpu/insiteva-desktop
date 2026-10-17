@@ -17,20 +17,36 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller pillow
       - name: Fix missing icons
+        shell: python
         run: |
-          mkdir Assets -Force
-          python -c "
           from PIL import Image
           import os
-          src = 'insiteva_logo.png' if os.path.exists('insiteva_logo.png') else 'insiteva_icon.png'
-          im = Image.open(src).convert('RGBA')
-          im.resize((44,44)).save('Assets/Square44x44Logo.png')
-          im.resize((50,50)).save('Assets/StoreLogo.png')
-          im.resize((150,150)).save('Assets/Square150x150Logo.png')
-          im.resize((310,310)).save('Assets/Square310x310Logo.png')
-          im.resize((310,150)).save('Assets/Wide310x150Logo.png')
-          print('Icons created from', src)
-          "
+          # Find source logo
+          for name in ['insiteva_logo.png', 'insiteva_icon.png', 'icon.png']:
+              if os.path.exists(name):
+                  src = name
+                  break
+          else:
+              src = None
+          
+          os.makedirs('Assets', exist_ok=True)
+          os.makedirs('assets', exist_ok=True)
+          
+          if src:
+              im = Image.open(src).convert('RGBA')
+              # For MSIX tiles
+              im.resize((44,44)).save('Assets/Square44x44Logo.png')
+              im.resize((50,50)).save('Assets/StoreLogo.png')
+              im.resize((150,150)).save('Assets/Square150x150Logo.png')
+              im.resize((310,310)).save('Assets/Square310x310Logo.png')
+              im.resize((310,150)).save('Assets/Wide310x150Logo.png')
+              # For EXE - this fixes your current error
+              im.save('assets/insiteva.ico', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])
+              im.save('Assets/insiteva.ico', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])
+              im.save('insiteva.ico', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])
+              print(f'Icons created from {src}')
+          else:
+              print('No source logo found!')
       - name: Build EXE
         run: pyinstaller INSITEVA.spec --noconfirm --clean
       - name: Make MSIX
