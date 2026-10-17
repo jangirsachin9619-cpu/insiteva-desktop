@@ -1,5 +1,4 @@
 name: Build MSIX
-
 on:
   push:
     branches: [ main ]
@@ -9,47 +8,78 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: DEBUG - Show repo structure
+        run: |
+          dir
+          echo "--- All .py files ---"
+          Get-ChildItem -Recurse -Filter *.py | Select-Object FullName
+
+      - name: Install deps
         run: |
           pip install pillow pyinstaller
-          dir
+          if (Test-Path "requirements.txt") { pip install -r requirements.txt }
 
-      - name: Fix missing icons
+      - name: Create icons
         run: |
-          if (-not (Test-Path "assets")) { mkdir assets }
-          if (-not (Test-Path "logo.png")) { echo "No logo.png found - build will use dummy icons" }
+          python -c "
+          from PIL import Image; import os; os.makedirs('assets', exist_ok=True);
+          logo=[f for f in ['logo.png','Logo.png'] if os.path.exists(f)][0];
+          im=Image.open(logo).convert('RGBA');
+          im.save('assets/insiteva.ico', sizes=[(256,256),(128,128),(64,64),(32,32),(16,16)]);
+          for n,s in [('StoreLogo.png',(50,50)),('Square150x150Logo.png',(150,150)),('SmallLogo.png',(44,44)),('Square44x44Logo.png',(44,44))]:
+            im.resize(s, Image.LANCZOS).save(f'assets/{n}')
+          "
+
+      - name: Fix INSITEVA.spec entry point
+        run: |
+          python -c "
+          import pathlib, os
+          # Find entry file
+          candidates = ['main.py', 'app.py', 'insiteva.py', 'index.py', 'src/main.py', 'app/main.py']
+          entry = None
+          for c in candidates:
+              if os.path.exists(c):
+                  entry = c
+                  break
+          if not entry:
+              # search recursively
+              for p in pathlib.Path('.').rglob('main.py'):
+                  entry = str(p)
+                  break
+          if not entry:
+              raise Exception('No entry .py file found! Upload main.py to repo root')
+          print(f'Using entry: {entry}')
+          # Rewrite spec with correct entry
+          spec = pathlib.Path('INSITEVA.spec').read_text()
+          # Replace first quoted .py with found entry
+          import re
+          spec = re.sub(r\"'[^']*main\.py'\", f\"'{entry}'\", spec)
+          spec = re.sub(r'\"[^\"]*main\.py\"', f\"'{entry}'\", spec)
+          # Ensure icon conditional
+          spec = spec.replace(\"icon='assets/insiteva.ico'\", \"icon='assets/insiteva.ico' if os.path.exists('assets/insiteva.ico') else None\")
+          if 'import os' not in spec:
+              spec = 'import os\n' + spec
+          pathlib.Path('INSITEVA.spec').write_text(spec)
+          print(spec[:1000])
+          "
 
       - name: Build EXE
         run: |
-          if (Test-Path "INSITEVA.spec") {
-            pyinstaller INSITEVA.spec --noconfirm
-          } elseif (Test-Path "main.py") {
-            pyinstaller --onefile --windowed --name INSITEVA main.py --noconfirm
-          } else {
-            echo "Skipping EXE build - checking for existing EXE"
-            Get-ChildItem -Recurse -Filter "*.exe" | Select-Object -First 5
-          }
+          pyinstaller INSITEVA.spec --noconfirm
+          Get-ChildItem dist/ -Recurse | Select-Object Name, Length
 
       - name: Make MSIX
-        run: |
-          Get-ChildItem -Recurse -Filter make_msix.py
-          if (Test-Path "./make_msix.py") {
-            python ./make_msix.py
-          } else {
-            $found = Get-ChildItem -Recurse -Filter make_msix.py | Select-Object -First 1
-            python $found.FullName
-          }
+        run: python make_msix.py
 
       - name: Upload MSIX
         uses: actions/upload-artifact@v4
         with:
-          name: INSITEVA-MSIX
-          path: "*.msix"
+          name: INSITEVA-1.0.15.0
+          path: '*.msix'
