@@ -1,41 +1,50 @@
-# INSITEVA - Windows deployment build
-from PyInstaller.utils.hooks import collect_submodules, collect_data_files
+# -*- mode: python ; coding: utf-8 -*-
+import os
 
-hiddenimports = collect_submodules('core') + collect_submodules('desktop')
-datas = []
-for pkg in ['matplotlib', 'openpyxl', 'reportlab', 'pptx']:
-    try:
-        datas += collect_data_files(pkg)
-    except Exception:
-        pass
+block_cipher = None
 
-datas.append(('assets', 'assets'))
+# Auto-find icon
+icon_path = 'assets/insiteva.ico' if os.path.exists('assets/insiteva.ico') else None
+# Auto-include assets folder
+datas_list = [('assets', 'assets')] if os.path.exists('assets') else []
 
 a = Analysis(
-    ['app.py'],
-    pathex=['.'],
+    ['main.py'],
+    pathex=[],
     binaries=[],
-    datas=datas,
-    hiddenimports=hiddenimports,
+    datas=datas_list,
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['tkinter'],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
     noarchive=False,
 )
 
-pyz = PYZ(a.pure)
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
 exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
+    a.zipfiles,
     a.datas,
     [],
     name='INSITEVA',
-    icon=None,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
     console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon=icon_path,
 )
