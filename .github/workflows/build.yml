@@ -18,8 +18,19 @@ jobs:
           pip install pyinstaller pillow
       - name: Fix missing icons
         run: |
-          mkdir assets -Force
-          python -c "from PIL import Image; Image.new('RGBA',(256,256),(0,120,255,255)).save('assets/insiteva.ico'); Image.new('RGBA',(256,256),(0,120,255,255)).save('insiteva.ico')"
+          mkdir Assets -Force
+          python -c "
+          from PIL import Image
+          import os
+          src = 'insiteva_logo.png' if os.path.exists('insiteva_logo.png') else 'insiteva_icon.png'
+          im = Image.open(src).convert('RGBA')
+          im.resize((44,44)).save('Assets/Square44x44Logo.png')
+          im.resize((50,50)).save('Assets/StoreLogo.png')
+          im.resize((150,150)).save('Assets/Square150x150Logo.png')
+          im.resize((310,310)).save('Assets/Square310x310Logo.png')
+          im.resize((310,150)).save('Assets/Wide310x150Logo.png')
+          print('Icons created from', src)
+          "
       - name: Build EXE
         run: pyinstaller INSITEVA.spec --noconfirm --clean
       - name: Make MSIX
@@ -27,5 +38,5 @@ jobs:
       - name: Upload MSIX
         uses: actions/upload-artifact@v4
         with:
-          name: INSITEVA-msix-1.0.14.0
+          name: INSITEVA-msix-1.0.15.0
           path: "*.msix"
