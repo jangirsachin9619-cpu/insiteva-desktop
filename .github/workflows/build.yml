@@ -16,27 +16,29 @@ jobs:
           python-version: '3.11'
 
       - name: DEBUG - Show repo structure
+        shell: bash
         run: |
-          echo "=== ROOT FILES ==="
-          dir
+          ls -la
           echo "=== ALL .py FILES ==="
-          Get-ChildItem -Recurse -Filter *.py | Select-Object FullName
+          find . -name "*.py" | head -20
           echo "=== ALL .png FILES ==="
-          Get-ChildItem -Recurse -Filter *.png | Select-Object FullName
+          find . -name "*.png" | head -20
 
       - name: Install deps
+        run: pip install pillow pyinstaller
+      - name: Install requirements
         run: |
-          pip install pillow pyinstaller
           if (Test-Path "requirements.txt") { pip install -r requirements.txt }
 
-      - name: Create icons - FIXED - won't crash
+      - name: Create icons - FIXED
+        shell: bash
         run: |
-          python -c "
+          python << 'PY'
           from PIL import Image
           import os, pathlib
           os.makedirs('assets', exist_ok=True)
           logo = None
-          for f in ['logo.png','Logo.png','insiteva.png','INSITEVA.png']:
+          for f in ['logo.png','Logo.png','insiteva.png']:
               if os.path.exists(f) and os.path.getsize(f) > 500:
                   logo = f
                   break
@@ -51,18 +53,18 @@ jobs:
               im.save('assets/insiteva.ico', sizes=[(256,256),(128,128),(64,64),(32,32),(16,16)])
               for name,size in [('StoreLogo.png',(50,50)),('Square150x150Logo.png',(150,150)),('SmallLogo.png',(44,44)),('Square44x44Logo.png',(44,44))]:
                   im.resize(size, Image.LANCZOS).save(f'assets/{name}')
-              print('Icons created from real logo')
           else:
-              print('WARNING: logo.png NOT FOUND - creating dummy grey icons')
+              print('WARNING: logo.png NOT FOUND - creating dummy icons')
               for name,size in [('StoreLogo.png',(50,50)),('Square150x150Logo.png',(150,150)),('SmallLogo.png',(44,44)),('Square44x44Logo.png',(44,44)),('insiteva.ico',(256,256))]:
                   path = f'assets/{name}'
                   if not os.path.exists(path):
                       Image.new('RGBA', size, (45,45,48,255)).save(path)
-          "
+          PY
 
       - name: Fix INSITEVA.spec entry point
+        shell: bash
         run: |
-          python -c "
+          python << 'PY'
           import pathlib, os, re
           entry = None
           for c in ['main.py','app.py','insiteva.py','index.py','src/main.py']:
@@ -79,18 +81,20 @@ jobs:
               raise SystemExit(1)
           print(f'Using entry: {entry}')
           spec = pathlib.Path('INSITEVA.spec').read_text()
-          spec = re.sub(r\"'[^']*main\.py'\", f\"'{entry}'\", spec)
-          spec = re.sub(r'\"[^\"]*main\.py\"', f\"'{entry}'\", spec)
-          spec = spec.replace(\"icon='assets/insiteva.ico'\", \"icon='assets/insiteva.ico' if os.path.exists('assets/insiteva.ico') else None\")
+          spec = re.sub(r"'[^']*main\.py'", f"'{entry}'", spec)
+          spec = re.sub(r'"[^"]*main\.py"', f"'{entry}'", spec)
+          spec = spec.replace("icon='assets/insiteva.ico'", "icon='assets/insiteva.ico' if os.path.exists('assets/insiteva.ico') else None")
           if 'import os' not in spec[:200]:
               spec = 'import os\n' + spec
           pathlib.Path('INSITEVA.spec').write_text(spec)
-          "
+          print('Spec fixed')
+          PY
 
       - name: Build EXE
-        run: |
-          pyinstaller INSITEVA.spec --noconfirm
-          Get-ChildItem dist/ -Recurse | Select-Object Name, Length
+        run: pyinstaller INSITEVA.spec --noconfirm
+
+      - name: Show EXE size
+        run: Get-ChildItem dist/ -Recurse | Select-Object Name, Length
 
       - name: Make MSIX
         run: python make_msix.py
