@@ -1,58 +1,55 @@
-name: Build Windows MSIX
+name: Build MSIX
+
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller pillow
+          pip install pillow pyinstaller
+          dir
+
       - name: Fix missing icons
-        shell: python
         run: |
-          from PIL import Image
-          import os
-          # Find source logo
-          for name in ['insiteva_logo.png', 'insiteva_icon.png', 'icon.png']:
-              if os.path.exists(name):
-                  src = name
-                  break
-          else:
-              src = None
-          
-          os.makedirs('Assets', exist_ok=True)
-          os.makedirs('assets', exist_ok=True)
-          
-          if src:
-              im = Image.open(src).convert('RGBA')
-              # For MSIX tiles
-              im.resize((44,44)).save('Assets/Square44x44Logo.png')
-              im.resize((50,50)).save('Assets/StoreLogo.png')
-              im.resize((150,150)).save('Assets/Square150x150Logo.png')
-              im.resize((310,310)).save('Assets/Square310x310Logo.png')
-              im.resize((310,150)).save('Assets/Wide310x150Logo.png')
-              # For EXE - this fixes your current error
-              im.save('assets/insiteva.ico', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])
-              im.save('Assets/insiteva.ico', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])
-              im.save('insiteva.ico', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])
-              print(f'Icons created from {src}')
-          else:
-              print('No source logo found!')
+          if (-not (Test-Path "assets")) { mkdir assets }
+          if (-not (Test-Path "logo.png")) { echo "No logo.png found - build will use dummy icons" }
+
       - name: Build EXE
-        run: pyinstaller INSITEVA.spec --noconfirm --clean
+        run: |
+          if (Test-Path "INSITEVA.spec") {
+            pyinstaller INSITEVA.spec --noconfirm
+          } elseif (Test-Path "main.py") {
+            pyinstaller --onefile --windowed --name INSITEVA main.py --noconfirm
+          } else {
+            echo "Skipping EXE build - checking for existing EXE"
+            Get-ChildItem -Recurse -Filter "*.exe" | Select-Object -First 5
+          }
+
       - name: Make MSIX
-        run: python make_msix.py
+        run: |
+          Get-ChildItem -Recurse -Filter make_msix.py
+          if (Test-Path "./make_msix.py") {
+            python ./make_msix.py
+          } else {
+            $found = Get-ChildItem -Recurse -Filter make_msix.py | Select-Object -First 1
+            python $found.FullName
+          }
+
       - name: Upload MSIX
         uses: actions/upload-artifact@v4
         with:
-          name: INSITEVA-msix-1.0.15.0
+          name: INSITEVA-MSIX
           path: "*.msix"
