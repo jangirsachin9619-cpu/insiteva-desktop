@@ -17,57 +17,74 @@ jobs:
 
       - name: DEBUG - Show repo structure
         run: |
+          echo "=== ROOT FILES ==="
           dir
-          echo "--- All .py files ---"
+          echo "=== ALL .py FILES ==="
           Get-ChildItem -Recurse -Filter *.py | Select-Object FullName
+          echo "=== ALL .png FILES ==="
+          Get-ChildItem -Recurse -Filter *.png | Select-Object FullName
 
       - name: Install deps
         run: |
           pip install pillow pyinstaller
           if (Test-Path "requirements.txt") { pip install -r requirements.txt }
 
-      - name: Create icons
+      - name: Create icons - FIXED - won't crash
         run: |
           python -c "
-          from PIL import Image; import os; os.makedirs('assets', exist_ok=True);
-          logo=[f for f in ['logo.png','Logo.png'] if os.path.exists(f)][0];
-          im=Image.open(logo).convert('RGBA');
-          im.save('assets/insiteva.ico', sizes=[(256,256),(128,128),(64,64),(32,32),(16,16)]);
-          for n,s in [('StoreLogo.png',(50,50)),('Square150x150Logo.png',(150,150)),('SmallLogo.png',(44,44)),('Square44x44Logo.png',(44,44))]:
-            im.resize(s, Image.LANCZOS).save(f'assets/{n}')
+          from PIL import Image
+          import os, pathlib
+          os.makedirs('assets', exist_ok=True)
+          logo = None
+          for f in ['logo.png','Logo.png','insiteva.png','INSITEVA.png']:
+              if os.path.exists(f) and os.path.getsize(f) > 500:
+                  logo = f
+                  break
+          if not logo:
+              for p in pathlib.Path('.').rglob('logo.png'):
+                  if p.stat().st_size > 500:
+                      logo = str(p)
+                      break
+          if logo:
+              print(f'Found logo: {logo}')
+              im = Image.open(logo).convert('RGBA')
+              im.save('assets/insiteva.ico', sizes=[(256,256),(128,128),(64,64),(32,32),(16,16)])
+              for name,size in [('StoreLogo.png',(50,50)),('Square150x150Logo.png',(150,150)),('SmallLogo.png',(44,44)),('Square44x44Logo.png',(44,44))]:
+                  im.resize(size, Image.LANCZOS).save(f'assets/{name}')
+              print('Icons created from real logo')
+          else:
+              print('WARNING: logo.png NOT FOUND - creating dummy grey icons')
+              for name,size in [('StoreLogo.png',(50,50)),('Square150x150Logo.png',(150,150)),('SmallLogo.png',(44,44)),('Square44x44Logo.png',(44,44)),('insiteva.ico',(256,256))]:
+                  path = f'assets/{name}'
+                  if not os.path.exists(path):
+                      Image.new('RGBA', size, (45,45,48,255)).save(path)
           "
 
       - name: Fix INSITEVA.spec entry point
         run: |
           python -c "
-          import pathlib, os
-          # Find entry file
-          candidates = ['main.py', 'app.py', 'insiteva.py', 'index.py', 'src/main.py', 'app/main.py']
+          import pathlib, os, re
           entry = None
-          for c in candidates:
+          for c in ['main.py','app.py','insiteva.py','index.py','src/main.py']:
               if os.path.exists(c):
                   entry = c
                   break
           if not entry:
-              # search recursively
               for p in pathlib.Path('.').rglob('main.py'):
                   entry = str(p)
                   break
           if not entry:
-              raise Exception('No entry .py file found! Upload main.py to repo root')
+              print('ERROR: No main.py found!')
+              print(list(pathlib.Path('.').rglob('*.py')))
+              raise SystemExit(1)
           print(f'Using entry: {entry}')
-          # Rewrite spec with correct entry
           spec = pathlib.Path('INSITEVA.spec').read_text()
-          # Replace first quoted .py with found entry
-          import re
           spec = re.sub(r\"'[^']*main\.py'\", f\"'{entry}'\", spec)
           spec = re.sub(r'\"[^\"]*main\.py\"', f\"'{entry}'\", spec)
-          # Ensure icon conditional
           spec = spec.replace(\"icon='assets/insiteva.ico'\", \"icon='assets/insiteva.ico' if os.path.exists('assets/insiteva.ico') else None\")
-          if 'import os' not in spec:
+          if 'import os' not in spec[:200]:
               spec = 'import os\n' + spec
           pathlib.Path('INSITEVA.spec').write_text(spec)
-          print(spec[:1000])
           "
 
       - name: Build EXE
